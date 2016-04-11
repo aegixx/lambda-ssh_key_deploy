@@ -1,0 +1,33 @@
+{
+  "name": "lambda-ssh_key_access",
+  "version": "1.0.0",
+  "description": "Automates creation of SSH users and deployment of public keys to EC2 instances",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/aegixx/lambda-ssh_key_access.git"
+  },
+  "bugs": {
+    "url": "https://github.com/aegixx/lambda-ssh_key_access/issues"
+  },
+  "homepage": "https://github.com/aegixx/lambda-ssh_key_access",
+  "dependencies": {
+    "aws-sdk": "^2.3.1"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "aws",
+    "ec2",
+    "ssh",
+    "security"
+    "access"
+    "lambda",
+    "amazon",
+    "s3"
+  ],
+  "author": "Bryan Stone",
+  "license": "MIT"
+}
