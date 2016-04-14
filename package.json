@@ -12,7 +12,9 @@
   },
   "homepage": "https://github.com/aegixx/lambda-ssh_key_access",
   "dependencies": {
-    "aws-sdk": "^2.3.1"
+    "async": "^2.0.0-rc.3",
+    "aws-sdk": "^2.3.1",
+    "simple-ssh": "^0.8.9"
   },
   "devDependencies": {},
   "scripts": {
@@ -22,8 +24,8 @@
     "aws",
     "ec2",
     "ssh",
-    "security"
-    "access"
+    "security",
+    "access",
     "lambda",
     "amazon",
     "s3"

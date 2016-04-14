@@ -51,7 +51,7 @@ You'll want to have at least the following permissions:
 \# Zip the deployment package
 zip -rq /tmp/lambda-ssh_key_access.zip *
 \# Upload the deployment package to AWS Lambda or use CLI
-aws lambda create-function --function-name "lambda-ssh_key_access" --runtime nodejs --role <YOUR_LAMBDA_IAM_ROLE> --handler index.handler --zip-file /tmp/lambda-ssh_key_access.zip
+aws lambda create-function --function-name "lambda-ssh_key_access" --runtime nodejs --role <YOUR_LAMBDA_IAM_ROLE> --handler index.handler --zip-file fileb:///tmp/lambda-ssh_key_access.zip
 \# Refresh an existing Lambda function deployment package
-aws lambda update-function-code --function-name "lambda-ssh_key_access" --zip-file /tmp/lambda-ssh_key_access.zip
+aws lambda update-function-code --function-name "lambda-ssh_key_access" --zip-file fileb:///tmp/lambda-ssh_key_access.zip
 ```
