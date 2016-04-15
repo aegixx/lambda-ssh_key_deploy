@@ -13,7 +13,7 @@ var s3 = new AWS.S3({
 
 var _TRACE = false;
 var _DEBUG = false;
-var MASTER_KEY_BUCKET = 'my-master-keys';
+var MASTER_KEY_BUCKET = 'acme-master-keys';
 var DEFAULT_TAG_FILTER = 'auto_assign_keys';
 var SSH_USER = 'ec2-user';
 var SSH_PORT = 22;
