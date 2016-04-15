@@ -169,3 +169,7 @@ acme-user-keys
 * All users can use
 
 ## Testing using AWS CLI
+```
+# Invoke the function using the test.event.json as your payload
+aws --profile staging lambda invoke --function-name "lambda-ssh_key_deploy" --invocation-type RequestResponse --log-type Tail --payload fileb://test.event.json /dev/stdout 2>/dev/null | sed 's/^null//' | jq '.LogResult' | sed 's/\"//g' | base64 -D
+```
