@@ -12,8 +12,8 @@ var s3 = new AWS.S3({
 });
 
 var _TRACE = false;
-var MASTER_KEY_BUCKET = 'my_bucket';
 var _DEBUG = false;
+var MASTER_KEY_BUCKET = 'my-master-keys';
 var DEFAULT_TAG_FILTER = 'auto_assign_keys';
 var SSH_USER = 'ec2-user';
 var SSH_PORT = 22;
@@ -66,7 +66,7 @@ function onStart(event, context, onFinish) {
 		} else {
 			onFinish();
 		}
-	};
+	}
 
 	function _downloadPublicKeys(records, onDone) {
 		if (_TRACE) {
@@ -150,7 +150,7 @@ function onStart(event, context, onFinish) {
 				var ipAddress = instance.PrivateIpAddress;
 				var instanceName = ipAddress;
 				var keyName = instance.KeyName;
-				for (var i in instance.Tags) {
+				for (var i = 0; i < instance.Tags.length; i++) {
 					var tag = instance.Tags[i];
 					if (tag.Key === 'Name') {
 						instanceName = tag.Value;
@@ -180,7 +180,7 @@ function onStart(event, context, onFinish) {
 				Values: [
 					'true'
 				]
-			}],
+			}]
 		}, function (err, data) {
 			if (err) {
 				onDone("getEC2Instances(reservation, onDone) - " + err);
@@ -283,7 +283,7 @@ function onStart(event, context, onFinish) {
 				in: fs.readFileSync('manageUser.sh')
 			});
 
-			for (var i in publicKeys) {
+			for (var i = 0; i < publicKeys.length; i++) {
 				var publicKey = publicKeys[i];
 				console.log("RECORD: ", publicKey);
 				_queueUserCommand(ssh, publicKey, _commandDone);
@@ -329,7 +329,7 @@ function onStart(event, context, onFinish) {
 
 				// Get only unique keys
 				var uniqKeyNames = [];
-				for (var i in records) {
+				for (var i = 0; i < records.length; i++) {
 					var record = records[i];
 					if (uniqKeyNames.indexOf(record.instance.keyName) < 0) {
 						uniqKeyNames.push(record.instance.keyName);
@@ -340,7 +340,7 @@ function onStart(event, context, onFinish) {
 					if (err) {
 						onDone("_downloadMasterKeys(records, onDone) :: " + err);
 					} else {
-						for (var i in records) {
+						for (var i = 0; i < records.length; i++) {
 							var record = records[i];
 							record['masterPrivateKeyBody'] = keyBodies[uniqKeyNames.indexOf(record.instance.keyName)];
 						}
@@ -364,7 +364,7 @@ function onStart(event, context, onFinish) {
 			}
 
 			var records = [];
-			for (var i in instances) {
+			for (var i = 0; i < instances.length; i++) {
 				var instance = instances[i];
 				records.push({
 					instance: instance,
@@ -380,7 +380,7 @@ function onStart(event, context, onFinish) {
 					if (err) {
 						_finish("onStart(event, context, onFinish) :: " + err);
 					} else {
-						for (var i in processedRecords) {
+						for (var i = 0; i < processedRecords.length; i++) {
 							var rec = processedRecords[i];
 							var success = rec.publicKeys.reduce(function (sum, record) {
 								return sum + (record.success ? 1 : 0);
