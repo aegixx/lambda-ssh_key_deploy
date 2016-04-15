@@ -14,9 +14,10 @@ var s3 = new AWS.S3({
 var _TRACE = false;
 var _DEBUG = false;
 var MASTER_KEY_BUCKET = 'acme-master-keys';
-var DEFAULT_TAG_FILTER = 'auto_assign_keys';
-var SSH_USER = 'ec2-user';
-var SSH_PORT = 22;
+
+var DEFAULT_TAG_FILTER = 'auto_assign_keys'; // Set this tag to 'true' to enable automatic deployment of users/keys
+var DEFAULT_SSH_USER = 'ec2-user';  // Override for each instance by setting the 'auto_assign_ssh_user' tag
+var DEFAULT_SSH_PORT = 22; // Override for each instance by setting the 'auto_assign_ssh_port' tag
 
 function onStart(event, context, onFinish) {
 	if (_TRACE) {
@@ -150,18 +151,27 @@ function onStart(event, context, onFinish) {
 				var ipAddress = instance.PrivateIpAddress;
 				var instanceName = ipAddress;
 				var keyName = instance.KeyName;
+				var sshPort = DEFAULT_SSH_PORT;
+				var sshUser = DEFAULT_SSH_USER;
 				for (var i = 0; i < instance.Tags.length; i++) {
 					var tag = instance.Tags[i];
 					if (tag.Key === 'Name') {
 						instanceName = tag.Value;
-						break;
+					}
+					if (tag.Key === 'auto_assign_ssh_port') {
+						sshPort = tag.Value;
+					}
+					if(tag.Key === 'auto_assign_ssh_user') {
+						sshUser = tag.Value;
 					}
 				}
 
 				onDone(null, {
 					name: instanceName,
 					ipAddress: ipAddress,
-					keyName: keyName
+					keyName: keyName,
+					sshUser: sshUser,
+					sshPort: sshPort
 				});
 			}
 
@@ -209,17 +219,19 @@ function onStart(event, context, onFinish) {
 			console.log('WARN: No master key available for instance ' + instance.name + ' (' + instance.ipAddress + ')');
 			onDone(null, record);
 		} else if (publicKeys.length > 0) {
-			console.log('INFO: Connecting to ' + instance.name + ' (' + instance.ipAddress + ') using master key: ' + instance.keyName);
+			if (_DEBUG) {
+				console.log('DEBUG: Connecting to ' + instance.name + ' (' + instance.sshUser + '@' + instance.ipAddress + ':' + instance.sshPort + ') using master key: ' + instance.keyName);
+			}
 
 			var ssh = new SSH({
 				host: instance.ipAddress,
-				user: SSH_USER,
-				port: SSH_PORT,
+				user: instance.sshUser,
+				port: instance.sshPort,
 				key: masterKeyBody
 			});
 
 			ssh.on('error', function (err) {
-				console.error('ERROR: SSH Failed to connect to ' + instance.name + ' (' + instance.ipAddress + ')', err);
+				console.error('ERROR: SSH Failed to connect to ' + instance.name + ' (' + instance.sshUser + '@' + instance.ipAddress + ':' + instance.sshPort + ')', err);
 				ssh.end();
 				onDone(null, record);
 			});
@@ -285,7 +297,6 @@ function onStart(event, context, onFinish) {
 
 			for (var i = 0; i < publicKeys.length; i++) {
 				var publicKey = publicKeys[i];
-				console.log("RECORD: ", publicKey);
 				_queueUserCommand(ssh, publicKey, _commandDone);
 			}
 
@@ -386,7 +397,7 @@ function onStart(event, context, onFinish) {
 								return sum + (record.success ? 1 : 0);
 							}, 0);
 							var total = rec.publicKeys.length;
-							console.log("INFO: Instance " + rec.instance.name + " (" + rec.instance.ipAddress + "): " + success + "/" + total + " - " + (success === total ? 'SUCCESS' : 'FAIL'));
+							console.log("INFO: " + (success === total ? '[SUCCESS] ' : '[FAIL] ') + rec.instance.name + " (" + rec.instance.ipAddress + "): " + success + "/" + total);
 						}
 						_finish();
 					}

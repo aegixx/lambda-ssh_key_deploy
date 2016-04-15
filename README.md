@@ -85,11 +85,12 @@ acme-user-keys
             "Effect": "Allow",
             "Action": [
                 "kms:Describe*",
-                "kms:Get*"
+                "kms:Get*",
+                "kms:Decrypt"
             ],
             "Resource": [
-                "arn:aws:kms:us-east-1:123456789012:alias/master-key-mgmt",
-                "arn:aws:kms:us-east-1:123456789012:alias/user-key-mgmt"
+                "arn:aws:kms:us-east-1:123456789012:alias/MASTER-KEY-ID",
+                "arn:aws:kms:us-east-1:123456789012:alias/USER-KEY-ID"
             ]
         }
     ]
@@ -130,6 +131,11 @@ acme-user-keys
         },
         {
             "Effect": "Allow",
+            "Action": ["s3:PutObject*", "s3:DeleteObject*"],
+            "Resource": "arn:aws:s3:::acme-user-keys/*/"
+        },
+        {
+            "Effect": "Allow",
             "Action": "s3:PutObject*",
             "Resource": "arn:aws:s3:::acme-user-keys/*/id_rsa.pub",
             "Condition": {
@@ -143,9 +149,10 @@ acme-user-keys
             "Action": [
                 "kms:Describe*",
                 "kms:List*",
-                "kms:GetKey*"
+                "kms:Get*",
+                "kms:Decrypt"
             ],
-            "Resource": "arn:aws:kms:us-east-1:123456789:alias/user-key-mgmt"
+            "Resource": "arn:aws:kms:us-east-1:1234567890:key/USER-KEY-ID"
         }
     ]
 }
