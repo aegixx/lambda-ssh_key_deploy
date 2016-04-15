@@ -3,6 +3,7 @@ var AWS = require('aws-sdk');
 var async = require("async");
 var util = require('util');
 var SSH = require('simple-ssh');
+var fs = require('fs');
 
 // get reference to AWS resources
 var ec2 = new AWS.EC2();
@@ -11,53 +12,51 @@ var s3 = new AWS.S3({
 });
 
 var _TRACE = false;
-var _DEBUG = true;
 var MASTER_KEY_BUCKET = 'my_bucket';
+var _DEBUG = false;
 var DEFAULT_TAG_FILTER = 'auto_assign_keys';
 var SSH_USER = 'ec2-user';
 var SSH_PORT = 22;
 
-function retrieveS3Object(bucket, key, onDone) {
-	if (_TRACE) {
-		console.log("TRACE: retrieveS3Object(bucket, key, onDone)", bucket, key);
-	}
-
-	if (!bucket) {
-		throw "EXCEPTION: retrieveS3Object(...) - 'bucket' parameter is missing."
-	}
-
-	if (!key) {
-		throw "EXCEPTION: retrieveS3Object(...) - 'key' parameter is missing."
-	}
-
-	s3.getObject({
-			Bucket: bucket,
-			Key: key
-		},
-		function (err, data) {
-			if (err) {
-				if (err.code === 'NoSuchKey') {
-					if (_DEBUG) {
-						console.log("DEBUG: " + err + " (" + bucket + "/" + key + ")");
-					}
-					onDone();
-				} else {
-					onDone("retrieveS3Object('" + bucket + "', '" + key + "', onDone) - " + err);
-				}
-			} else {
-				onDone(null, data.Body.toString());
-			}
-		});
-}
-
 function onStart(event, context, onFinish) {
 	if (_TRACE) {
-		console.log("TRACE: onStart(event, context, onFinish)");
+		console.log("TRACE: onStart(event, context, onFinish)", util.inspect(event, {depth: 5}));
+	}
+
+	function _retrieveS3Object(bucket, key, onDone) {
+		if (_TRACE) {
+			console.log("TRACE: _retrieveS3Object('" + bucket + "', '" + key + "', onDone)");
+		}
+
+		if (!bucket) {
+			throw "EXCEPTION: _retrieveS3Object(...) - 'bucket' parameter is missing."
+		}
+
+		if (!key) {
+			throw "EXCEPTION: _retrieveS3Object(...) - 'key' parameter is missing."
+		}
+
+		s3.getObject({
+				Bucket: bucket,
+				Key: key
+			},
+			function (err, data) {
+				if (err) {
+					if (err.code === 'NoSuchKey') {
+						console.log("WARN: " + err + " (" + bucket + "/" + key + ")");
+						onDone();
+					} else {
+						onDone("_retrieveS3Object('" + bucket + "', '" + key + "', onDone) - " + err);
+					}
+				} else {
+					onDone(null, data.Body.toString());
+				}
+			});
 	}
 
 	function _finish(error, success) {
 		if (_TRACE) {
-			console.log("TRACE: _finish(error, success)", error, success);
+			console.log("TRACE: _finish('" + error + "', '" + success + "')");
 		}
 
 		if (error) {
@@ -71,12 +70,12 @@ function onStart(event, context, onFinish) {
 
 	function _downloadPublicKeys(records, onDone) {
 		if (_TRACE) {
-			console.log("TRACE: _downloadPublicKeys(records, onDone)", records);
+			console.log("TRACE: _downloadPublicKeys(records, onDone)");
 		}
 
 		function _getBody(item, onDone) {
 			if (_TRACE) {
-				console.log("TRACE: _getBody(item, onDone)", item);
+				console.log("TRACE: _getBody(item, onDone)");
 			}
 
 			// Parse out the s3 bucket / key
@@ -91,24 +90,34 @@ function onStart(event, context, onFinish) {
 				return onDone("Unknown action (" + item.eventName + ") for '" + bucket + "/" + key + "'");
 			}
 
-			retrieveS3Object(bucket, key, function (err, body) {
-				if (err) {
-					onDone("_getBody(item, onDone) on '" + bucket + "/" + key + "' - " + err);
-				} else {
-					onDone(null, {
-						bucket: bucket,
-						key: key,
-						action: action,
-						username: key.substr(0, key.indexOf('/')),
-						body: body.trim()
-					});
-				}
-			});
+			if (action === 'add') {
+				_retrieveS3Object(bucket, key, function (err, body) {
+					if (err) {
+						onDone("_getBody(item, onDone) on '" + bucket + "/" + key + "' - " + err);
+					} else {
+						onDone(null, {
+							bucket: bucket,
+							key: key,
+							action: action,
+							username: key.substr(0, key.indexOf('/')),
+							body: body.trim()
+						});
+					}
+				});
+			} else {
+				onDone(null, {
+					bucket: bucket,
+					key: key,
+					action: action,
+					username: key.substr(0, key.indexOf('/')),
+					body: null
+				});
+			}
 		}
 
 		async.map(records, _getBody, function (err, results) {
 			if (err) {
-				onDone("_downloadS3Objects(records, onDone) :: " + err);
+				onDone("_downloadPublicKeys(records, onDone) :: " + err);
 			} else {
 				onDone(null, results);
 			}
@@ -122,7 +131,7 @@ function onStart(event, context, onFinish) {
 
 		function _getInstances(reservation, onDone) {
 			if (_TRACE) {
-				console.log("TRACE: _getInstances(reservation, onDone)", reservation);
+				console.log("TRACE: _getInstances(reservation, onDone)");
 			}
 
 			if (!reservation) {
@@ -131,7 +140,7 @@ function onStart(event, context, onFinish) {
 
 			function _getInstanceDetail(instance, onDone) {
 				if (_TRACE) {
-					console.log("TRACE: _getInstanceDetail(instance, onDone)", instance);
+					console.log("TRACE: _getInstanceDetail(instance, onDone)");
 				}
 
 				if (!instance) {
@@ -189,7 +198,7 @@ function onStart(event, context, onFinish) {
 
 	function _syncUsers(record, onDone) {
 		if (_TRACE) {
-			console.log("TRACE: _syncUsers(record, onDone)", record);
+			console.log("TRACE: _syncUsers(record, onDone)");
 		}
 
 		var instance = record.instance;
@@ -200,98 +209,87 @@ function onStart(event, context, onFinish) {
 			console.log('WARN: No master key available for instance ' + instance.name + ' (' + instance.ipAddress + ')');
 			onDone(null, record);
 		} else if (publicKeys.length > 0) {
-			try {
-				console.log('INFO: ' + publicKeys.length + ' public key(s) to  deploy...');
-				console.log('INFO: Connecting to ' + instance.name + ' (' + instance.ipAddress + ') using master key: ' + instance.keyName);
+			console.log('INFO: Connecting to ' + instance.name + ' (' + instance.ipAddress + ') using master key: ' + instance.keyName);
 
-				var ssh = new SSH({
-					host: instance.ipAddress,
-					user: SSH_USER,
-					port: SSH_PORT,
-					key: masterKeyBody
+			var ssh = new SSH({
+				host: instance.ipAddress,
+				user: SSH_USER,
+				port: SSH_PORT,
+				key: masterKeyBody
+			});
+
+			ssh.on('error', function (err) {
+				console.error('ERROR: SSH Failed to connect to ' + instance.name + ' (' + instance.ipAddress + ')', err);
+				ssh.end();
+				onDone(null, record);
+			});
+
+			function _queueUserCommand(ssh, publicKey, onExit) {
+				if (_TRACE) {
+					console.log("TRACE: _queueUserCommand(ssh, publicKey, onExit) - " + publicKey.action + " :: " + publicKey.username);
+				}
+
+				var action = publicKey.action;
+				var username = publicKey.username;
+				var keyBody = publicKey.body;
+
+				var cmd = null;
+				if (action === 'add') {
+					cmd = 'echo "' + keyBody + '" | sudo ~/manageUser ' + action + ' ' + username;
+				} else {
+					cmd = 'sudo ~/manageUser ' + action + ' ' + username;
+				}
+				if (_DEBUG) {
+					console.log("DEBUG: Queueing SSH Command: " + cmd);
+				}
+				ssh.exec(cmd, {
+					pty: true,
+					exit: function (code, stdout, stderr) {
+						onExit(publicKey, code, stdout, stderr);
+					}
 				});
 
-				ssh.on('error', function (err) {
-					console.error('ERROR: SSH Failed to connect to ' + instance.name + ' (' + instance.ipAddress + ')', err);
-					ssh.end();
-					onDone(null, record);
-				});
+			}
 
-				function _addUsers(onDone) {
-					if (_TRACE) {
-						console.log("TRACE: _addUsers(onDone)");
-					}
+			function _commandDone(publicKey, code, stdout, stderr) {
+				if (_DEBUG && stdout) {
+					console.log("DEBUG: SSH (stdout) - " + stdout);
+				}
+				if (stderr) {
+					console.log("WARN: SSH (stderr) - " + stderr);
+				}
+				if (_DEBUG) {
+					console.log("DEBUG: SSH exit code: " + code);
+				}
 
-					function _queueUserCommand(ssh, publicKey, onExit) {
-						if (_TRACE) {
-							console.log("TRACE: _queueUserCommand(ssh, publicKey, onExit)", publicKey);
-						}
-
-						var action = publicKey.action;
-						var username = publicKey.username;
-						var keyBody = publicKey.body;
-
-						var cmd = 'echo "' + keyBody + '" | sudo ~/manageUser ' + action + ' ' + username;
-						if (_DEBUG) {
-							console.log("DEBUG: Queueing SSH Command: " + cmd);
-						}
-						ssh.exec(cmd, {
-							pty: true,
-							exit: function (code, stdout, stderr) {
-								onExit(publicKey, code, stdout, stderr);
-							}
-						});
-
-					}
-
-					ssh.exec('cat > ~/manageUser && chmod +x ~/manageUser', {
-						in: fs.readFileSync('manageUser.sh')
-					});
-
-					function _commandDone(publicKey, code, stdout, stderr) {
-						if (_DEBUG) {
-							console.log("DEBUG: SSH Command: " + cmd);
-							if (stdout) {
-								console.log("DEBUG: SSH (stdout) - " + stdout);
-							}
-						}
-						if (stderr) {
-							console.log("WARN: SSH (stderr) - " + stderr);
-						}
-						if (_DEBUG) {
-							console.log("DEBUG: SSH exit code: " + code);
-						}
-
-						if (code === 0) {
-							publicKey['success'] = true;
-						} else {
-							publicKey['fail'] = true;
-						}
-
-
-						// Make sure we are done
-						if (!publicKeys.find(function (rec) {
-								return !rec.success || !rec.fail;
-							}, false)) {
-							ssh.end();
-							onDone();
-						}
-					}
-
-					for (var i in publicKeys) {
-						var publicKey = publicKeys[i];
-						_queueUserCommand(ssh, publicKey, _commandDone);
-					}
-
-					ssh.start();
-
+				if (code === 0) {
+					publicKey['success'] = true;
+				} else {
+					publicKey['fail'] = true;
 				}
 
 
-			} catch (err) {
-				console.error('ERROR: Error while synchronizing ' + instance.name + ' (' + instance.ipAddress + ') - ', err);
-				onDone(null, record); // Don't halt
+				// Make sure we are done
+				if (!publicKeys.find(function (rec) {
+						return !(rec.success || rec.fail);
+					})) {
+					ssh.end();
+					onDone(null, record);
+				}
 			}
+
+			// Make sure system has script
+			ssh.exec('cat > ~/manageUser && chmod +x ~/manageUser', {
+				in: fs.readFileSync('manageUser.sh')
+			});
+
+			for (var i in publicKeys) {
+				var publicKey = publicKeys[i];
+				console.log("RECORD: ", publicKey);
+				_queueUserCommand(ssh, publicKey, _commandDone);
+			}
+
+			ssh.start();
 		} else {
 			// Continue even if you can't sync to one instance
 			onDone(null, record);
@@ -308,17 +306,19 @@ function onStart(event, context, onFinish) {
 			var publicKeys = results[0];
 			var instances = results[1];
 
+			console.log("INFO: " + publicKeys.length + " public key(s) to update on " + instances.length + " instance(s)");
+
 			function _downloadMasterKeys(records, onDone) {
 				if (_TRACE) {
-					console.log("TRACE: _downloadMasterKeys(records, onDone)", records);
+					console.log("TRACE: _downloadMasterKeys(records, onDone)");
 				}
 
 				function _getBody(keyName, onDone) {
 					if (_TRACE) {
-						console.log("TRACE: _getBody(keyName, onDone)", keyName);
+						console.log("TRACE: _getBody('" + keyName + "', onDone)");
 					}
 
-					retrieveS3Object(MASTER_KEY_BUCKET, keyName, function (err, body) {
+					_retrieveS3Object(MASTER_KEY_BUCKET, keyName, function (err, body) {
 						if (err) {
 							onDone("_getBody(keyName, onDone) on '" + MASTER_KEY_BUCKET + "/" + keyName + "' - " + err);
 						} else {
@@ -351,7 +351,7 @@ function onStart(event, context, onFinish) {
 
 			function _applyToInstances(records, onDone) {
 				if (_TRACE) {
-					console.log("TRACE: _applyToInstances(records, onDone)", records);
+					console.log("TRACE: _applyToInstances(records, onDone)");
 				}
 
 				async.map(records, _syncUsers, function (err, processedRecords) {
@@ -380,11 +380,14 @@ function onStart(event, context, onFinish) {
 					if (err) {
 						_finish("onStart(event, context, onFinish) :: " + err);
 					} else {
-						console.log(publicKeys);
-						// var numCompleted = processedRecords.reduce(function (sum, record) {
-						// 	return (sum || 0) + (record.isComplete ? 1 : 0);
-						// }, 0);
-						// console.log("INFO: Successfully synced " + numCompleted + " / " + processedRecords.length + " instance(s)")
+						for (var i in processedRecords) {
+							var rec = processedRecords[i];
+							var success = rec.publicKeys.reduce(function (sum, record) {
+								return sum + (record.success ? 1 : 0);
+							}, 0);
+							var total = rec.publicKeys.length;
+							console.log("INFO: Instance " + rec.instance.name + " (" + rec.instance.ipAddress + "): " + success + "/" + total + " - " + (success === total ? 'SUCCESS' : 'FAIL'));
+						}
 						_finish();
 					}
 				});

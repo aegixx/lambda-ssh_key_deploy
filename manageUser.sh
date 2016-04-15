@@ -53,11 +53,15 @@ if [[ "$action" == "add" ]]; then
         exit 2
     fi
 
-    ## Add User
-    adduser -m $username
+    if ! grep -q $username /etc/passwd; then
+        ## Add User
+        useradd -m $username 2> /dev/null # Don't care if they already exist
+    fi
 
-    ## Verify home folder
-    mkdir -p /home/$username/.ssh
+    if [ ! -d /home/$username/.ssh ]; then
+        ## Verify home folder
+        mkdir -p /home/$username/.ssh
+    fi
 
     ## Add / Reset authorized key
     echo "$publickey" > /home/$username/.ssh/authorized_keys
