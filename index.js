@@ -4,6 +4,7 @@ var async = require("async");
 var util = require('util');
 var SSH = require('simple-ssh');
 var fs = require('fs');
+var config = require('./config');
 
 // get reference to AWS resources
 var ec2 = new AWS.EC2();
@@ -11,13 +12,8 @@ var s3 = new AWS.S3({
 	signatureVersion: 'v4'
 });
 
-var _TRACE = false;
-var _DEBUG = false;
-var MASTER_KEY_BUCKET = 'acme-master-keys';
-
-var DEFAULT_TAG_FILTER = 'auto_assign_keys'; // Set this tag to 'true' to enable automatic deployment of users/keys
-var DEFAULT_SSH_USER = 'ec2-user';  // Override for each instance by setting the 'auto_assign_ssh_user' tag
-var DEFAULT_SSH_PORT = 22; // Override for each instance by setting the 'auto_assign_ssh_port' tag
+var _TRACE = config.logging.traceEnabled;
+var _DEBUG = config.logging.debugEnabled;
 
 function onStart(event, context, onFinish) {
 	if (_TRACE) {
@@ -151,17 +147,17 @@ function onStart(event, context, onFinish) {
 				var ipAddress = instance.PrivateIpAddress;
 				var instanceName = ipAddress;
 				var keyName = instance.KeyName;
-				var sshPort = DEFAULT_SSH_PORT;
-				var sshUser = DEFAULT_SSH_USER;
+				var sshPort = config.ssh.defaultPort;
+				var sshUser = config.ssh.defaultUser;
 				for (var i = 0; i < instance.Tags.length; i++) {
 					var tag = instance.Tags[i];
-					if (tag.Key === 'Name') {
+					if (tag.Key === config.ec2Tags.name) {
 						instanceName = tag.Value;
 					}
-					if (tag.Key === 'auto_assign_ssh_port') {
+					if (tag.Key === config.ec2Tags.overridePort) {
 						sshPort = tag.Value;
 					}
-					if(tag.Key === 'auto_assign_ssh_user') {
+					if(tag.Key === config.ec2Tags.overrideUser) {
 						sshUser = tag.Value;
 					}
 				}
@@ -186,7 +182,7 @@ function onStart(event, context, onFinish) {
 
 		ec2.describeInstances({
 			Filters: [{
-				Name: 'tag:' + DEFAULT_TAG_FILTER,
+				Name: 'tag:' + config.ec2Tags.instanceFilter,
 				Values: [
 					'true'
 				]
@@ -329,9 +325,9 @@ function onStart(event, context, onFinish) {
 						console.log("TRACE: _getBody('" + keyName + "', onDone)");
 					}
 
-					_retrieveS3Object(MASTER_KEY_BUCKET, keyName, function (err, body) {
+					_retrieveS3Object(config.masterKeyBucket, keyName, function (err, body) {
 						if (err) {
-							onDone("_getBody(keyName, onDone) on '" + MASTER_KEY_BUCKET + "/" + keyName + "' - " + err);
+							onDone("_getBody(keyName, onDone) on '" + config.masterKeyBucket + "/" + keyName + "' - " + err);
 						} else {
 							onDone(null, body);
 						}
