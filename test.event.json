@@ -15,8 +15,8 @@
           "size": 412
         },
         "bucket": {
-          "arn": "arn:aws:s3:::my-master-keys",
-          "name": "my-master-keys",
+          "arn": "arn:aws:s3:::acme-user-keys",
+          "name": "acme-user-keys",
           "ownerIdentity": {
             "principalId": "EXAMPLE"
           }
