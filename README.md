@@ -64,8 +64,7 @@ acme-user-keys
         {
             "Effect": "Allow",
             "Action": [
-                "s3:ListBucket",
-                "s3:GetBucket"
+                "s3:ListBucket"
             ],
             "Resource": [
                 "arn:aws:s3:::acme-user-keys",
@@ -111,7 +110,9 @@ acme-user-keys
         {
             "Effect": "Allow",
             "Action": [
-                "s3:ListBucket"
+                "s3:ListBucket",
+                "s3:GetBucketLocation",
+                "s3:ListAllMyBuckets"
             ],
             "Resource": [
                 "arn:aws:s3:::acme-user-keys"
