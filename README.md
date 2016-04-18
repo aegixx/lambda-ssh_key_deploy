@@ -193,6 +193,14 @@ This policy should be attached to ALL users / roles to prevent any but root from
 * Only administrators can admin
 * All users can use
 
+##### (IAM) Lambda Execution Role
+* Create a Lambda Service Role named *LambdaKeysMgmt* (you can use your own name, if you prefer)
+* Attach the [Lambda Execution Role Policy](#lambda_policy) referenced above
+* Attach the following default policies:
+  * AWSLambdaRole (for basic execution) 
+  * AmazonEC2ReadOnlyAccess (to list / describe EC2 instances)
+  * AWSLambdaBasicExecutionRole (to allow CloudWatch logging of execution) 
+
 ##### 3) Clone Lambda source
 ```bash
 # Clone repository
