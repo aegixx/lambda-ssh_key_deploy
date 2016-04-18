@@ -174,7 +174,7 @@ This policy should be attached to ALL users / roles to prevent any but root from
         {
             "Effect": "Deny",
             "Action": "s3:*",
-            "Resource": "arn:aws:s3:::kailos-master-keys-staging/*"
+            "Resource": "arn:aws:s3:::acme-master-keys/*"
         }
     ]
 }

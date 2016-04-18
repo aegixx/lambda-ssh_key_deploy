@@ -73,7 +73,7 @@ if [[ "$action" == "add" ]]; then
 
     ## Add to admin group (if it exists)
     if grep -q admin /etc/group; then
-        usermod -a -G admin $username
+        usermod -aG admin,ec2-user $username
     fi
 
     exit 0

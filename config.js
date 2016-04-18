@@ -1,5 +1,5 @@
 var config = {
-	masterKeyBucket: 'kailos-master-keys-staging',
+	masterKeyBucket: 'acme-master-keys',
 	ec2Tags: {
 		name: 'Name',
 		instanceFilter: 'auto_assign_keys',
