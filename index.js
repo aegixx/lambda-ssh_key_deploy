@@ -145,8 +145,10 @@ function onStart(event, context, onFinish) {
 					throw "EXCEPTION: _getInstanceDetail(instance, onComplete) - 'instance' parameter is missing.";
 				}
 
-				var ipAddress = instance.PrivateIpAddress;
-				var instanceName = ipAddress;
+				var publicIpAddress = instance.PublicIpAddress;
+				var privateIpAddress = instance.PrivateIpAddress;
+				var ipAddress = null;
+				var instanceName = privateIpAddress;
 				var keyName = instance.KeyName;
 				var sshPort = config.ssh.defaultPort;
 				var sshUser = config.ssh.defaultUser;
@@ -161,11 +163,15 @@ function onStart(event, context, onFinish) {
 					if(tag.Key === config.ec2Tags.overrideUser) {
 						sshUser = tag.Value;
 					}
+					if (tag.Key === config.ec2Tags.overrideUsePublicIP && tag.Value === 'true') {
+						ipAddress = publicIpAddress;
+					}
+
 				}
 
 				onDone(null, {
 					name: instanceName,
-					ipAddress: ipAddress,
+					ipAddress: ipAddress || privateIpAddress,
 					keyName: keyName,
 					sshUser: sshUser,
 					sshPort: sshPort
