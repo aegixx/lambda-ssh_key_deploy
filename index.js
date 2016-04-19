@@ -2,6 +2,7 @@
 var AWS = require('aws-sdk');
 var async = require("async");
 var util = require('util');
+var extend = require('util')._extend;
 var SSH = require('simple-ssh');
 var fs = require('fs');
 var config = require('./config');
@@ -226,12 +227,6 @@ function onStart(event, context, onFinish) {
 				key: masterKeyBody
 			});
 
-			ssh.on('error', function (err) {
-				console.error('ERROR: SSH Failed to connect to ' + instance.name + ' (' + instance.sshUser + '@' + instance.ipAddress + ':' + instance.sshPort + ')', err);
-				ssh.end();
-				onDone(null, record);
-			});
-
 			function _queueUserCommand(ssh, publicKey, onExit) {
 				if (_TRACE) {
 					console.log("TRACE: _queueUserCommand(ssh, publicKey, onExit) - " + publicKey.action + " :: " + publicKey.username);
@@ -276,7 +271,6 @@ function onStart(event, context, onFinish) {
 					publicKey['fail'] = true;
 				}
 
-
 				// Make sure we are done
 				if (!publicKeys.find(function (rec) {
 						return !(rec.success || rec.fail);
@@ -296,7 +290,13 @@ function onStart(event, context, onFinish) {
 				_queueUserCommand(ssh, publicKey, _commandDone);
 			}
 
-			ssh.start();
+			ssh.start({
+				fail: function(err) {
+					console.error('ERROR: SSH Failed to connect to ' + instance.name + ' (' + instance.sshUser + '@' + instance.ipAddress + ':' + instance.sshPort + ')', err);
+					ssh.end();
+					onDone(null, record);
+				}
+			});
 		} else {
 			// Continue even if you can't sync to one instance
 			onDone(null, record);
@@ -373,9 +373,16 @@ function onStart(event, context, onFinish) {
 			var records = [];
 			for (var i = 0; i < instances.length; i++) {
 				var instance = instances[i];
+
+				// Clone public keys so you can track success/fail for each instance
+				var clonedPublicKeys = [];
+				for (var j = 0; j < publicKeys.length; j++) {
+					clonedPublicKeys.push(extend({}, publicKeys[j]));
+				}
+				
 				records.push({
 					instance: instance,
-					publicKeys: publicKeys
+					publicKeys: clonedPublicKeys
 				});
 			}
 
