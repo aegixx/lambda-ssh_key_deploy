@@ -1,4 +1,8 @@
 var config = {
+	aws: {
+		region: 'us-east-1'
+	},
+	userKeyBucket: 'acme-user-keys',
 	masterKeyBucket: 'acme-master-keys',
 	ec2Tags: {
 		name: 'Name',

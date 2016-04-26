@@ -7,6 +7,10 @@ var SSH = require('simple-ssh');
 var fs = require('fs');
 var config = require('./config');
 
+if (config.aws) {
+	AWS.config.update(config.aws);
+}
+
 // get reference to AWS resources
 var ec2 = new AWS.EC2();
 var s3 = new AWS.S3({
