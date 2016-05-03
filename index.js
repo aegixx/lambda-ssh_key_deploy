@@ -20,41 +20,42 @@ var s3 = new AWS.S3({
 var _TRACE = config.logging.traceEnabled;
 var _DEBUG = config.logging.debugEnabled;
 
-function now() {
-  new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
-}
-
 function trace(msg) {
   if (_TRACE) {
+    var ts =   (new Date()).toISOString().replace(/T/, ' ').replace(/\..+/, '');
     var args = Array.prototype.slice.call(arguments, 1);
-    args.splice(0, 0, now() + " TRACE: " + msg);
+    args.splice(0, 0, ts + " TRACE: " + msg);
     console.log.apply(this, args);
   }
 }
 
 function debug(msg) {
   if (_DEBUG) {
+    var ts =   (new Date()).toISOString().replace(/T/, ' ').replace(/\..+/, '');
     var args = Array.prototype.slice.call(arguments, 1);
-    args.splice(0, 0, now() + " DEBUG: " + msg);
+    args.splice(0, 0, ts + " DEBUG: " + msg);
     console.log.apply(this, args);
   }
 }
 
 function error(msg) {
+  var ts =   (new Date()).toISOString().replace(/T/, ' ').replace(/\..+/, '');
   var args = Array.prototype.slice.call(arguments, 1);
-  args.splice(0, 0, now() + " ERROR: " + msg);
+  args.splice(0, 0, ts + " ERROR: " + msg);
   console.error.apply(this, args);
 }
 
 function warn(msg) {
+  var ts =   (new Date()).toISOString().replace(/T/, ' ').replace(/\..+/, '');
   var args = Array.prototype.slice.call(arguments, 1);
-  args.splice(0, 0, now() + " WARN: " + msg);
+  args.splice(0, 0, ts + " WARN: " + msg);
   console.error.apply(this, args);
 }
 
 function info(msg) {
+  var ts =   (new Date()).toISOString().replace(/T/, ' ').replace(/\..+/, '');
   var args = Array.prototype.slice.call(arguments, 1);
-  args.splice(0, 0, now() + " INFO: " + msg);
+  args.splice(0, 0, ts + " INFO: " + msg);
   console.log.apply(this, args);
 }
 
@@ -417,7 +418,7 @@ function onStart(event, context, onFinish) {
 								return sum + (record.success ? 1 : 0);
 							}, 0);
 							var total = rec.publicKeys.length;
-							console.log("INFO: " + (success === total ? '[SUCCESS] ' : '[FAIL] ') + rec.instance.name + " (" + rec.instance.ipAddress + "): " + success + "/" + total);
+							info((success === total ? '[SUCCESS] ' : '[FAIL] ') + rec.instance.name + " (" + rec.instance.ipAddress + "): " + success + "/" + total);
 						}
 						_finish();
 					}
