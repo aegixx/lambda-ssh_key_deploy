@@ -1,3 +1,5 @@
+#!/bin/env node
+
 var deploy = require('./index');
 var config = require ('./config');
 var fs = require('fs');
