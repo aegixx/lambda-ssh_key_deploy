@@ -306,7 +306,7 @@ function onStart(event, context, onFinish) {
 
 			// Make sure system has script
 			ssh.exec('cat > ~/manageUser && chmod +x ~/manageUser', {
-				in: fs.readFileSync('manageUser.sh')
+				in: fs.readFileSync(__dirname + '/manageUser.sh')
 			});
 
 			for (var i = 0; i < publicKeys.length; i++) {
