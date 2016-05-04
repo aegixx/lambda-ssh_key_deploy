@@ -49,7 +49,7 @@ if [[ "$action" == "add" ]]; then
     read -p "Enter the public key of $username > " publickey
 
     if [ -z "$publickey" ]; then
-        echo "A public key is required"
+        echo "Public Key is required"
         exit 2
     fi
 
