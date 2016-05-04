@@ -72,9 +72,11 @@ if [[ "$action" == "add" ]]; then
     chmod 0600 /home/$username/.ssh/authorized_keys
 
     ## Add to admin group (if it exists)
-    if grep -q admin /etc/group; then
-        usermod -aG admin,ec2-user $username
+    if ! grep -q admin /etc/group; then
+      groupadd admin
+      bash -c 'echo "admin ALL=(ALL) NOPASSWD: ALL" | (EDITOR="tee -a" visudo)'
     fi
+    usermod -aG admin,ec2-user $username
 
     exit 0
 
