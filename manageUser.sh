@@ -74,7 +74,7 @@ if [[ "$action" == "add" ]]; then
     ## Add to admin group (if it exists)
     if ! grep -q admin /etc/group; then
       groupadd admin
-      bash -c 'echo "admin ALL=(ALL) NOPASSWD: ALL" | (EDITOR="tee -a" visudo)'
+      bash -c 'echo "%admin ALL=(ALL) NOPASSWD: ALL" | (EDITOR="tee -a" visudo)'
     fi
     usermod -aG admin,ec2-user $username
 
