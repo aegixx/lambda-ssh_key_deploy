@@ -42,17 +42,13 @@ if (eventFile) {
 				event.Records.push({
 					s3: {
 						object: {
-							eTag: obj.ETag,
-							key: obj.Key,
-							size: obj.Size
+							key: obj.Key
 						},
 						bucket: {
-							arn: "arn:aws:s3:::" + config.userKeyBucket,
 							name: config.userKeyBucket
 						}
 					},
-					eventName: "ObjectCreated:Put",
-					eventSource: "aws:s3"
+					eventName: "add"
 				});
 			}
 

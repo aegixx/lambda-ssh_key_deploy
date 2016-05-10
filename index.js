@@ -119,7 +119,7 @@ function onStart(event, context, onFinish) {
 			} else if (item.eventName.match(/ObjectRemoved/)) {
 				action = 'delete';
 			} else {
-				return onDone("Unknown action (" + item.eventName + ") for '" + bucket + "/" + key + "'");
+				action = item.eventName;
 			}
 
 			if (action === 'add') {
@@ -156,8 +156,8 @@ function onStart(event, context, onFinish) {
 		});
 	}
 
-	function _getEC2Instances(onDone) {
-		trace("_getEC2Instances(onDone)");
+	function _getEC2Instances(records, onDone) {
+		trace("_getEC2Instances(records, onDone)");
 
 		function _getInstances(reservation, onDone) {
 			trace("_getInstances(reservation, onDone)");
@@ -215,26 +215,55 @@ function onStart(event, context, onFinish) {
 			});
 		}
 
-		ec2.describeInstances({
-			Filters: [{
-				Name: 'tag:' + config.ec2Tags.instanceFilter,
-				Values: [
-					'true'
-				]
-			}]
-		}, function (err, data) {
-			if (err) {
-				onDone("getEC2Instances(reservation, onDone) - " + err);
-			} else {
-				async.map(data.Reservations, _getInstances, function (err, results) {
-					if (err) {
-						onDone("getEC2Instances(reservation, onDone) :: " + err);
-					} else {
-						onDone(null, [].concat.apply([], results)); // Flatten the array before returning
-					}
-				});
+		var manualEC2Instances = [];
+		for (var i = 0; i < records.length; i++) {
+			var rec = records[i];
+			if (rec.ec2 && rec.ec2.instanceId) {
+				manualEC2Instances.push(rec.ec2.instanceId);
 			}
-		});
+		}
+
+		if (manualEC2Instances.length > 0) {
+			ec2.describeInstances({
+				Filters: [{
+					Name: 'instance-id',
+					Values: manualEC2Instances
+				}]
+			}, function (err, data) {
+				if (err) {
+					onDone("getEC2Instances(reservation, onDone) - " + err);
+				} else {
+					async.map(data.Reservations, _getInstances, function (err, results) {
+						if (err) {
+							onDone("getEC2Instances(reservation, onDone) :: " + err);
+						} else {
+							onDone(null, [].concat.apply([], results)); // Flatten the array before returning
+						}
+					});
+				}
+			});
+		} else {
+			ec2.describeInstances({
+				Filters: [{
+					Name: 'tag:' + config.ec2Tags.instanceFilter,
+					Values: [
+						'true'
+					]
+				}]
+			}, function (err, data) {
+				if (err) {
+					onDone("getEC2Instances(reservation, onDone) - " + err);
+				} else {
+					async.map(data.Reservations, _getInstances, function (err, results) {
+						if (err) {
+							onDone("getEC2Instances(reservation, onDone) :: " + err);
+						} else {
+							onDone(null, [].concat.apply([], results)); // Flatten the array before returning
+						}
+					});
+				}
+			});
+		}
 	}
 
 	function _syncUsers(record, onDone) {
@@ -329,7 +358,7 @@ function onStart(event, context, onFinish) {
 
 	async.parallel([
 		async.apply(_downloadPublicKeys, event.Records),
-		_getEC2Instances
+		async.apply(_getEC2Instances, event.Records)
 	], function _(err, results) {
 		if (err) {
 			_finish("onStart(event, context, onFinish) :: " + err);
