@@ -356,6 +356,9 @@ function onStart(event, context, onFinish) {
 		}
 	}
 
+	// Configuration Overrides
+	config = extend(config, event['Config']);
+	
 	async.parallel([
 		async.apply(_downloadPublicKeys, event.Records),
 		async.apply(_getEC2Instances, event.Records)

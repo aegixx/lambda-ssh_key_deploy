@@ -14,5 +14,11 @@
       },
       "eventName": "add"
     }
-  ]
+  ],
+  "Config": {
+    "ssh": {
+      "defaultUser": "ec2-user",
+      "defaultPort": 9805
+    }
+  }
 }
