@@ -3,7 +3,6 @@ var config = require ('./config');
 var http = require('http');
 var url = require('url');
 
-
 var listenPort = (config.server && config.server['listenPort']) || 8187;
 var listenAddress = (config.server && config.server['listenAddress']) || '0.0.0.0';
 
@@ -54,7 +53,7 @@ http.createServer(function (req, res) {
   }
 
 }).listen(listenPort, listenAddress);
-console.log('Server running at http://'+listenAddress+':'+listnePort+'/');
+console.log('Server running at http://'+listenAddress+':'+listenPort+'/');
 
 function processEvent(event) {
 	deploy.handler(event, {}, function(error, success) {
