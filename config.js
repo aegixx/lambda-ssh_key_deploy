@@ -18,7 +18,11 @@ var config = {
 	logging: {
 		traceEnabled: false,
 		debugEnabled: false
-	}
+	},
+  server: {
+    listenAddress: '0.0.0.0'
+    listenPort: 8187
+  }
 };
 
 module.exports = config;

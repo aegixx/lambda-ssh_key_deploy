@@ -4,7 +4,6 @@ var deploy = require('./index');
 var config = require ('./config');
 var fs = require('fs');
 
-
 var eventFile = process.argv[2];
 var event = null;
 if (eventFile) {
