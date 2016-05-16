@@ -20,7 +20,7 @@ var config = {
 		debugEnabled: false
 	},
   server: {
-    listenAddress: '0.0.0.0'
+    listenAddress: '0.0.0.0',
     listenPort: 8187
   }
 };
