@@ -228,7 +228,11 @@ function onStart(event, context, onFinish) {
 				Filters: [{
 					Name: 'instance-id',
 					Values: manualEC2Instances
-				}]
+				},
+        {
+          Name: 'instance-state-name',
+          Values: ['running']
+        }]
 			}, function (err, data) {
 				if (err) {
 					onDone("getEC2Instances(reservation, onDone) - " + err);
@@ -246,10 +250,12 @@ function onStart(event, context, onFinish) {
 			ec2.describeInstances({
 				Filters: [{
 					Name: 'tag:' + config.ec2Tags.instanceFilter,
-					Values: [
-						'true'
-					]
-				}]
+					Values: ['true']
+				},
+        {
+          Name: 'instance-state-name',
+          Values: ['running']
+        }]
 			}, function (err, data) {
 				if (err) {
 					onDone("getEC2Instances(reservation, onDone) - " + err);
