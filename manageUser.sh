@@ -1,7 +1,7 @@
 #!/bin/bash
 
 display_usage() {
-    echo -e "\nUSAGE: manageUser ACTION USERNAME"
+    echo -e "\nUSAGE: manageUser ACTION USERNAME DEFAULT_USER"
     echo -e "(must be run with super-user privileges)\n"
 }
 
@@ -22,9 +22,10 @@ fi
 
 action=$1
 username=$2
+default_user=${3:-ec2-user}
 
-if [[ "$username" == "ec2-user" || "$username" == "root" ]]; then
-    echo "!! Cannot take action on ec2-user or root users !!"
+if [[ "$username" == "$default_user" || "$username" == "root" ]]; then
+    echo "!! Cannot take action on $default_user or root users !!"
     exit 1
 fi
 
@@ -76,7 +77,7 @@ if [[ "$action" == "add" ]]; then
     if ! grep -q %admin /etc/sudoers; then
       bash -c 'echo "%admin ALL=(ALL) NOPASSWD: ALL" | (EDITOR="tee -a" visudo)'
     fi
-    usermod -aG admin,ec2-user $username
+    usermod -aG admin,$default_user $username
 
     exit 0
 

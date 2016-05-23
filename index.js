@@ -295,9 +295,9 @@ function onStart(event, context, onFinish) {
 
 				var cmd = null;
 				if (action === 'add') {
-					cmd = 'echo "' + keyBody + '" | sudo ~/manageUser ' + action + ' ' + username;
+					cmd = 'echo "' + keyBody + '" | sudo ~/manageUser ' + action + ' ' + username + ' ' + instance.sshUser;
 				} else {
-					cmd = 'sudo ~/manageUser ' + action + ' ' + username;
+					cmd = 'sudo ~/manageUser ' + action + ' ' + username + ' ' + instance.sshUser;
 				}
 				debug("Queueing SSH Command: " + cmd);
         ssh.exec(cmd, {
