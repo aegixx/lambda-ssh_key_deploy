@@ -182,19 +182,27 @@ function onStart(event, context, onFinish) {
 				var sshUser = config.ssh.defaultUser;
 				for (var i = 0; i < instance.Tags.length; i++) {
 					var tag = instance.Tags[i];
-					if (tag.Key === config.ec2Tags.name) {
-						instanceName = tag.Value;
-					}
-					if (tag.Key === config.ec2Tags.overridePort) {
-						sshPort = tag.Value;
-					}
-					if(tag.Key === config.ec2Tags.overrideUser) {
-						sshUser = tag.Value;
-					}
-					if (tag.Key === config.ec2Tags.overrideUsePublicIP && tag.Value === 'true') {
-						ipAddress = publicIpAddress;
-					}
+          switch (tag.Key) {
 
+            case config.ec2Tags.name:
+						  instanceName = tag.Value;
+              break;
+
+            case config.ec2Tags.overridePort:
+  						sshPort = tag.Value;
+              break;
+
+            case config.ec2Tags.overrideUser:
+  						sshUser = tag.Value;
+              break;
+            
+            case config.ec2Tags.overrideUsePublicIP:
+              if (tag.Value === 'true') {
+  						  ipAddress = publicIpAddress;
+              }
+              break;
+            
+          }
 				}
 
 				onDone(null, {
@@ -363,7 +371,9 @@ function onStart(event, context, onFinish) {
 	}
 
 	// Configuration Overrides
-	config = extend(config, event['Config']);
+  if (event['Config']) {
+    config = extend(config, event['Config']);
+  }
 	
 	async.parallel([
 		async.apply(_downloadPublicKeys, event.Records),
