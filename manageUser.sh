@@ -77,7 +77,7 @@ if [[ "$action" == "add" ]]; then
     if ! grep -q %admin /etc/sudoers; then
       bash -c 'echo "%admin ALL=(ALL) NOPASSWD: ALL" | (EDITOR="tee -a" visudo)'
     fi
-    usermod -aG admin,$default_user $username
+    usermod -aG admin -g $default_user $username
 
     exit 0
 
