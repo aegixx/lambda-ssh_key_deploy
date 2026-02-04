@@ -1,5 +1,9 @@
 # lambda-ssh_key_deploy
 
+> **⚠️ This project is no longer maintained.**
+>
+> This repository is archived and will not receive any further updates, bug fixes, or security patches. Use at your own risk. If you need continued support, consider forking the project.
+
 Securely automate SSH user access to EC2 instances via [AWS Lambda](http://docs.aws.amazon.com/lambda/latest/dg/getting-started.html).  Create / Revoke user access to a fleet of systems quickly and without handing out your master key credentials.
 
 ## Setup
