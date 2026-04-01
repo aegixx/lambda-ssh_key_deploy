@@ -15,11 +15,14 @@
     "async": "^2.0.0-rc.3",
     "aws-sdk": "^2.3.1",
     "fs": "0.0.2",
-    "simple-ssh": "^0.8.9"
+    "simple-ssh": "^0.8.9",
+    "snyk": "^1.189.0"
   },
   "devDependencies": {},
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "snyk-protect": "snyk protect",
+    "prepublish": "npm run snyk-protect"
   },
   "keywords": [
     "aws",
@@ -32,5 +35,6 @@
     "s3"
   ],
   "author": "Bryan Stone",
-  "license": "MIT"
+  "license": "MIT",
+  "snyk": true
 }
